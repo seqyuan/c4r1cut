@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/seqyuan/annogene/io/fastq"
 	"log"
+	"compress/gzip"
 	"os"
 	)
 
@@ -25,7 +26,7 @@ func usage() {
 
 func main() {
 	infq := flag.String("inFQ", "", "test.fastq")
-	extractRegion := flag.String("c", "6:16,22:32,37:47", "you can input multi-regons split.by ,")
+	extractRegion := flag.String("c", "5:15,21:31,36:46", "you can input multi-regons split.by ,")
 	outfile := flag.String("o", "", "outfile.fastq")
 	flag.Parse()
 	if *infq == "" || *outfile == "" {
@@ -35,9 +36,13 @@ func main() {
 	file, err := os.Open(*infq)
 	check(err)
 
-	defer file.Close()
+	gz, err := gzip.NewReader(file)
+	check(err)
 
-	r := fastq.NewReader(file)
+	defer file.Close()
+	defer gz.Close()
+
+	r := fastq.NewReader(gz)
 	sc := fastq.NewScanner(r)
 
 	fo, err := os.OpenFile(*outfile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0660)
